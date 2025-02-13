@@ -4,28 +4,28 @@ import hashlib
 import re
 
 # 读取数据并排序
-def read_and_sort_datatest(datatest_folder):
+def read_and_sort_data(data_folder):
     articles = []
-    # 遍历 datatest 文件夹下所有子文件夹
-    for folder_name in os.listdir(datatest_folder):
-        folder_path = os.path.join(datatest_folder, folder_name)
+    # 遍历 data 文件夹下所有子文件夹
+    for folder_name in os.listdir(data_folder):
+        folder_path = os.path.join(data_folder, folder_name)
         if os.path.isdir(folder_path):
             # 針對 fixed 文件夾，讀取其中所有 JSON 文件（該文件夾內無子文件夾）
             if folder_name == "fixed":
                 for filename in os.listdir(folder_path):
                     if filename.endswith(".json"):
                         with open(os.path.join(folder_path, filename), 'r', encoding='utf-8') as f:
-                            datatest = json.load(f)
-                            if "page" not in datatest:
-                                datatest["page"] = 9999
-                            articles.append(datatest)
+                            data = json.load(f)
+                            if "page" not in data:
+                                data["page"] = 9999
+                            articles.append(data)
             else:
                 # 其他子文件夾，例如 "page"
                 for filename in os.listdir(folder_path):
                     if filename.endswith(".json"):
                         with open(os.path.join(folder_path, filename), 'r', encoding='utf-8') as f:
-                            datatest = json.load(f)
-                            articles.append(datatest)
+                            data = json.load(f)
+                            articles.append(data)
     articles.sort(key=lambda x: (x.get("page", 9999), x.get("order", 9999)))
     return articles
 
@@ -69,7 +69,7 @@ def parse_comment(comment, article_url, level=0, selected_color="white", index=0
 
 # 生成完整 HTML 页面
 def generate_html(articles, result_file="原版.html"):
-    articles_datatest = []
+    articles_data = []
     for article in articles:
         article_url = article["article_url"]
         article_title = article["title"]
@@ -96,7 +96,7 @@ def generate_html(articles, result_file="原版.html"):
             f"<div class='article-divider'><hr><h3>评论内容</h3></div>"
             + comments_html
         )
-        articles_datatest.append({
+        articles_data.append({
             "title": article_title,
             "article_time": article_time,
             "article_url": article_url,
@@ -104,7 +104,7 @@ def generate_html(articles, result_file="原版.html"):
         })
 
     # 生成 JSON 字符串后，将所有的 </ 替换为 <\/ 避免嵌入 <script> 标签时被误判结束标签
-    articles_json = json.dumps(articles_datatest, ensure_ascii=False).replace("</", "<\\/")
+    articles_json = json.dumps(articles_data, ensure_ascii=False).replace("</", "<\\/")
     articlesPerPage_value = 10
 
     html_content = f"""<!DOCTYPE html>
@@ -1411,8 +1411,8 @@ def generate_html(articles, result_file="原版.html"):
     print(f"已生成文件：{result_file}")
 
 def main():
-    datatest_folder = "datatest"  # 数据目录中应包含 "page" 和 "fixed" 文件夹
-    articles = read_and_sort_datatest(datatest_folder)
+    data_folder = "data"  # 数据目录中应包含 "page" 和 "fixed" 文件夹
+    articles = read_and_sort_data(data_folder)
     generate_html(articles)
 
 if __name__ == "__main__":
