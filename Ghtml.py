@@ -3,38 +3,35 @@ import json
 import hashlib
 import re
 
-
 # 读取数据并排序
-def read_and_sort_data(data_folder):
+def read_and_sort_datatest(datatest_folder):
     articles = []
-    # 遍历 data 文件夹下所有子文件夹
-    for folder_name in os.listdir(data_folder):
-        folder_path = os.path.join(data_folder, folder_name)
+    # 遍历 datatest 文件夹下所有子文件夹
+    for folder_name in os.listdir(datatest_folder):
+        folder_path = os.path.join(datatest_folder, folder_name)
         if os.path.isdir(folder_path):
-            # 针对 fixed 文件夹，读取其中所有 JSON 文件（该文件夹内无子文件夹）
+            # 針對 fixed 文件夾，讀取其中所有 JSON 文件（該文件夾內無子文件夾）
             if folder_name == "fixed":
                 for filename in os.listdir(folder_path):
                     if filename.endswith(".json"):
                         with open(os.path.join(folder_path, filename), 'r', encoding='utf-8') as f:
-                            data = json.load(f)
-                            if "page" not in data:
-                                data["page"] = 9999
-                            articles.append(data)
+                            datatest = json.load(f)
+                            if "page" not in datatest:
+                                datatest["page"] = 9999
+                            articles.append(datatest)
             else:
-                # 其他子文件夹，例如 "page"
+                # 其他子文件夾，例如 "page"
                 for filename in os.listdir(folder_path):
                     if filename.endswith(".json"):
                         with open(os.path.join(folder_path, filename), 'r', encoding='utf-8') as f:
-                            data = json.load(f)
-                            articles.append(data)
+                            datatest = json.load(f)
+                            articles.append(datatest)
     articles.sort(key=lambda x: (x.get("page", 9999), x.get("order", 9999)))
     return articles
-
 
 # 生成评论唯一ID
 def generate_unique_id(article_url, index):
     return hashlib.md5(f"{article_url}-{index}".encode("utf-8")).hexdigest()
-
 
 # 解析评论并返回 HTML（递归处理回复评论）
 def parse_comment(comment, article_url, level=0, selected_color="white", index=0):
@@ -44,18 +41,18 @@ def parse_comment(comment, article_url, level=0, selected_color="white", index=0
     highlight = comment.get('highlight', False)
     children = comment.get('children', [])
 
-    # 如果 highlight 为 True 或作者为 "andy"（不区分大小写）或 "李宗恩"，则采用高亮背景
-    if highlight or (author.lower() == "andy" or author == "李宗恩"):
+    if highlight:
         highlight_class = "highlight"
+        bg_color = "#fff5cc"
     else:
         highlight_class = "reply"
+        bg_color = selected_color
 
     current_index = index
     comment_id = generate_unique_id(article_url, current_index)
     index = current_index + 1
 
-    # 不再通过内联 style 设置背景颜色，由 CSS 控制（reply 评论背景由设置面板控制，默认 white）
-    html = f'<div class="comment {highlight_class}" id="{comment_id}" onclick="removeHighlight(this)">'
+    html = f'<div class="comment {highlight_class}" style="background-color:{bg_color}" id="{comment_id}" onclick="removeHighlight(this)">'
     html += f'<div class="author">{author}</div>'
     html += f'<div class="time">{time_str}</div>'
     html += f'<div class="comment-text">{content}</div>'
@@ -70,10 +67,9 @@ def parse_comment(comment, article_url, level=0, selected_color="white", index=0
     html += '</div>'
     return html, index
 
-
 # 生成完整 HTML 页面
 def generate_html(articles, result_file="原版.html"):
-    articles_data = []
+    articles_datatest = []
     for article in articles:
         article_url = article["article_url"]
         article_title = article["title"]
@@ -91,17 +87,16 @@ def generate_html(articles, result_file="原版.html"):
         # 生成文章部分 HTML，其中包含文章标题、发布时间、正文，
         # 在正文和评论之间添加分界线和“评论内容”标题
         full_html = (
-                f"<div class='article-header' style='background-color: var(--bg-area); color: var(--text-color); padding:10px;'>"
-                f"<h2>{article_title}</h2>"
-                f"<div class='article-time'>发布时间：{article_time}</div>"
-                f"<a href='{article_url}' class='origin-link' target='_blank'>查看文章原文</a>"
-                f"</div>"
-                f"<div class='article-content' style='background-color: var(--bg-area); color: var(--text-color); padding:10px;'>"
-                f"{article_content}</div>"
-                f"<div class='article-divider'><hr><h3>评论内容</h3></div>"
-                + comments_html
+            f"<div class='article-header'>"
+            f"<h2>{article_title}</h2>"
+            f"<div class='article-time'>发布时间：{article_time}</div>"
+            f"<a href='{article_url}' class='origin-link' target='_blank'>查看文章原文</a>"
+            f"</div>"
+            f"<div class='article-content'>{article_content}</div>"
+            f"<div class='article-divider'><hr><h3>评论内容</h3></div>"
+            + comments_html
         )
-        articles_data.append({
+        articles_datatest.append({
             "title": article_title,
             "article_time": article_time,
             "article_url": article_url,
@@ -109,7 +104,7 @@ def generate_html(articles, result_file="原版.html"):
         })
 
     # 生成 JSON 字符串后，将所有的 </ 替换为 <\/ 避免嵌入 <script> 标签时被误判结束标签
-    articles_json = json.dumps(articles_data, ensure_ascii=False).replace("</", "<\\/")
+    articles_json = json.dumps(articles_datatest, ensure_ascii=False).replace("</", "<\\/")
     articlesPerPage_value = 10
 
     html_content = f"""<!DOCTYPE html>
@@ -117,7 +112,7 @@ def generate_html(articles, result_file="原版.html"):
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>评论展示</title>
+  <title>阳气诊所</title>
   <!-- 引入 opencc-js 完整版，实现简繁转换 -->
   <script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.js"></script>
   <!-- 引入 Google Fonts -->
@@ -132,9 +127,9 @@ def generate_html(articles, result_file="原版.html"):
       --line-height: 1.6;
       --font-family: 'Roboto', sans-serif;
       --background-color: #f4f4f9;
+      --heading-size: calc(var(--font-size) * 1.375);
       --btn-bg: #667eea;
       --btn-hover: #556cd6;
-      --bg-area: #ffffff;
     }}
     /* 基础重置 */
     * {{
@@ -208,13 +203,13 @@ def generate_html(articles, result_file="原版.html"):
     .btn-danger {{ background-color: #ff5555; }}
     .btn-danger:hover {{ background-color: #e04e4e; }}
 
-    /* 下拉框与按钮保持一致 */
+    /* 让下拉框与其他按钮大小一致，并修复PC端展开时“空白”问题 */
     select.btn-header {{
       -webkit-appearance: none;
       -moz-appearance: none;
       appearance: none;
-      background-color: var(--btn-bg);
-      color: #fff;
+      background-color: var(--btn-bg); /* 按钮背景色 */
+      color: #fff;                    /* 按钮文字色 */
       padding: 8px 16px;
       font-size: 16px;
       border: 2px solid #fff;
@@ -226,6 +221,7 @@ def generate_html(articles, result_file="原版.html"):
       background-color: #fff;
       color: #333;
     }}
+    /* 暗黑模式下，选项也要可见 */
     body.dark-mode select.btn-header option {{
       background-color: #444;
       color: #ddd;
@@ -264,17 +260,15 @@ def generate_html(articles, result_file="原版.html"):
       display: none;
       border-radius: 5px;
     }}
-    /* 文章区域 */
+    /* 文章内容 */
     .article-header {{
       text-align: center;
       margin: 20px auto;
       padding: 10px;
       border-bottom: 1px solid #ccc;
       max-width: 800px;
-      background-color: var(--bg-area);
-      color: var(--text-color);
     }}
-    .article-header h2 {{ margin-bottom: 10px; font-size: var(--font-size); }}
+    .article-header h2 {{ margin-bottom: 10px; font-size: var(--heading-size); }}
     .article-time {{
       font-size: 0.9em;
       color: #888;
@@ -282,7 +276,7 @@ def generate_html(articles, result_file="原版.html"):
     }}
     .origin-link {{
       text-decoration: none;
-      font-size: 16px;
+      font-size: var(--font-size);
       color: var(--primary-color);
       border: 1px solid var(--primary-color);
       padding: 5px 10px;
@@ -300,8 +294,6 @@ def generate_html(articles, result_file="原版.html"):
       font-size: var(--font-size);
       line-height: var(--line-height);
       word-wrap: break-word;
-      background-color: var(--bg-area);
-      color: var(--text-color);
     }}
     .article-content p {{
       margin: 10px 0;
@@ -314,6 +306,7 @@ def generate_html(articles, result_file="原版.html"):
     .article-content a:hover {{
       text-decoration: underline;
     }}
+    /* 分界线及标题 */
     .article-divider {{
       max-width: 800px;
       margin: 20px auto;
@@ -329,27 +322,27 @@ def generate_html(articles, result_file="原版.html"):
       font-size: 20px;
       color: var(--primary-color);
     }}
-    /* 评论样式 */
+    /* 评论样式（默认卡片布局） */
     .comment {{
       padding: 15px;
       margin: 15px auto;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       max-width: 800px;
-      transition: transform 0.2s;
+      transition: background-color 0.3s, transform 0.2s;
       cursor: pointer;
-      background-color: var(--bg-area);
-      color: var(--text-color);
+      background-color: #fff;
     }}
     .comment:hover {{
-      /* 仅保留位移动画，不改变背景色 */
+      background-color: #f9f9f9;
       transform: translateY(-2px);
     }}
     .comment.highlight {{
+      background-color: #fff5cc;
       border-left: 5px solid #ffdb00;
-      background-color: #fff5cc !important;
     }}
     .comment.reply {{
+      background-color: #ffffff;
       border-left: 5px solid #66ccff;
     }}
     .comment .author {{
@@ -385,14 +378,10 @@ def generate_html(articles, result_file="原版.html"):
       border: 4px solid #ff8888;
       background-color: transparent;
     }}
+    /* 新增：文章搜索后标题或内容红框高亮（点击后消失） */
     .article-search-highlight {{
       border: 4px solid red;
       background-color: transparent;
-    }}
-    /* 在暗黑模式下，将搜索后高亮的评论（根据作者或评论搜索）外边框设置为红色 */
-    body.dark-mode .highlighted-comment,
-    body.dark-mode .search-highlight {{
-      border: 4px solid red !important;
     }}
     /* 分页样式 */
     .pagination {{
@@ -439,10 +428,12 @@ def generate_html(articles, result_file="原版.html"):
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       transition: background-color 0.3s, transform 0.2s;
       cursor: pointer;
+      /* 防止长英文或网址超出边界 */
       word-wrap: break-word;
       overflow-wrap: break-word;
       white-space: normal;
     }}
+    /* 黑暗模式下搜索结果列表也变为深色 */
     body.dark-mode .search-result-item {{
       background-color: #2b2b2b;
       color: #ccc;
@@ -460,6 +451,7 @@ def generate_html(articles, result_file="原版.html"):
       margin: 0 auto;
       display: block;
     }}
+    /* 暗黑模式下文章下拉框保持与搜索区域一致 */
     body.dark-mode #articleDropdown {{
       background-color: #444;
       color: #ddd;
@@ -468,6 +460,7 @@ def generate_html(articles, result_file="原版.html"):
       -moz-appearance: none;
       appearance: none;
     }}
+    /* 暗黑模式下下拉框中 option 选项样式也保持一致 */
     body.dark-mode #articleDropdown option {{
       background-color: #444;
       color: #ddd;
@@ -530,20 +523,17 @@ def generate_html(articles, result_file="原版.html"):
     body.dark-mode input::placeholder {{
       color: #ccc;
     }}
+    /* 黑暗模式下设置面板样式 */
     body.dark-mode .modal-content {{
       background-color: #333;
       color: #ccc;
       border: 1px solid #555;
     }}
-    /* 暗黑模式下文章区域样式：采用与评论区一致的背景和文字颜色 */
-    body.dark-mode .article-header,
-    body.dark-mode .article-content {{
-      background-color: #2b2b2b !important;
-      color: #ccc !important;
-    }}
-    /* 手机端优化 */
+
+    /* ==================== 手机端优化 ==================== */
     @media (max-width: 768px) {{
       header h1 {{ font-size: 18px; }}
+      /* 让下拉框在手机端和其他按钮一样大小 */
       .btn-header,
       select.btn-header {{
         font-size: 12px;
@@ -566,6 +556,7 @@ def generate_html(articles, result_file="原版.html"):
         font-size: var(--font-size);
       }}
     }}
+
     /* 列表布局：卡片布局与列表布局切换 */
     #articleComments.layout-list .comment {{
       box-shadow: none !important;
@@ -575,6 +566,7 @@ def generate_html(articles, result_file="原版.html"):
       border-bottom: 1px solid #ccc;
       border-radius: 0 !important;
     }}
+    /* 以下规则仅在电脑端生效，使列表布局居中 */
     @media (min-width: 769px) {{
       #articleComments.layout-list {{
           display: flex;
@@ -586,6 +578,7 @@ def generate_html(articles, result_file="原版.html"):
           max-width: 800px;
       }}
     }}
+    /* 新增：列表布局下高亮效果使用红色边框 */
     #articleComments.layout-list .comment.highlighted-comment,
     #articleComments.layout-list .comment.search-highlight {{
         border: 4px solid #ff8888 !important;
@@ -639,7 +632,7 @@ def generate_html(articles, result_file="原版.html"):
       border-radius: 5px;
       cursor: pointer;
     }}
-    /* 确保媒体资源自适应 */
+    /* 新增：确保图片、iframe、embed、object、video 等媒体资源在手机上不会超出容器宽度 */
     img, iframe, embed, object, video {{
       max-width: 100%;
       height: auto;
@@ -649,9 +642,10 @@ def generate_html(articles, result_file="原版.html"):
 <body>
   <header>
     <div style="display:flex; align-items:center;">
-      <h1>评论展示</h1>
+      <h1>阳气诊所</h1>
       <button class="btn btn-header" onclick="toggleDarkMode()">切换暗黑模式</button>
       <button class="btn btn-header" onclick="openSettings()">设置</button>
+      <!-- 语言切换下拉框，也使用 btn btn-header，让它和其他按钮在手机端同尺寸 -->
       <select id="languageSelect" onchange="changeLanguage()" class="btn btn-header">
         <option value="original">原内容</option>
         <option value="traditional">繁體</option>
@@ -712,9 +706,10 @@ def generate_html(articles, result_file="原版.html"):
           <option value="Verdana, sans-serif">Verdana</option>
           <option value="'Courier New', monospace">Courier New</option>
           <option value="Georgia, serif">Georgia</option>
+          <!-- 新增中文常用字体 -->
           <option value="'Microsoft YaHei', sans-serif">微软雅黑</option>
           <option value="'SimSun', serif">宋体</option>
-          <option value="'SimHei', sans-serif">黑体</option>
+          <option value="'SimHei', serif">黑体</option>
           <option value="'FangSong', serif">仿宋</option>
           <option value="'KaiTi', serif">楷体</option>
           <option value="'PingFang SC', sans-serif">苹方</option>
@@ -725,12 +720,13 @@ def generate_html(articles, result_file="原版.html"):
         <h3>背景颜色设置</h3>
         <label for="bgColorSelect">选择背景色:</label>
         <select id="bgColorSelect" onchange="onBgColorSelectChange()">
-          <option value="lightblue">淡蓝</option>
-          <option value="lightgreen">淡绿</option>
-          <option value="lightcoral">淡红</option>
-          <option value="lightyellow">淡黄</option>
-          <option value="thistle">淡紫</option>
-          <option value="white" selected>白色</option>
+          <!-- 修改预设颜色为更适合阅读的颜色 -->
+          <option value="aliceblue">清晨湛蓝</option>
+          <option value="honeydew">蜜意清绿</option>
+          <option value="mistyrose">轻纱玫瑰</option>
+          <option value="ivory">象牙白</option>
+          <option value="lavender">薰衣草紫</option>
+          <option value="white" selected>素雪</option>
           <option value="custom">自定义</option>
         </select>
         <div id="customBgColorContainer" style="display: none; margin-top: 10px;">
@@ -738,7 +734,7 @@ def generate_html(articles, result_file="原版.html"):
           <input type="color" id="customBgColorInput" value="#ffffff">
         </div>
       </div>
-      <!-- 布局风格设置 -->
+      <!-- 新增：布局风格设置 -->
       <div style="border-bottom: 1px solid #ccc; margin-bottom: 10px; padding-bottom: 10px;">
         <h3>布局风格设置</h3>
         <label for="layoutStyleSelect">选择布局风格:</label>
@@ -769,6 +765,7 @@ def generate_html(articles, result_file="原版.html"):
     }}
 
     /* ---------------- 全文语言切换相关函数 ---------------- */
+    // 遍历 DOM，记录所有文本节点的原始内容（排除 SCRIPT/STYLE/等）
     function initOriginalText(root) {{
       if (root.nodeType === Node.TEXT_NODE) {{
         if (root.textContent.trim() !== "") {{
@@ -782,6 +779,8 @@ def generate_html(articles, result_file="原版.html"):
         }}
       }}
     }}
+
+    // 根据 currentLanguage 更新文本节点内容
     function applyLanguageToNode(root) {{
       if (root.nodeType === Node.TEXT_NODE) {{
         if (root._originalText === undefined) {{
@@ -800,6 +799,8 @@ def generate_html(articles, result_file="原版.html"):
         }}
       }}
     }}
+
+    // 切换语言
     function changeLanguage() {{
       currentLanguage = document.getElementById("languageSelect").value;
       applyLanguageToNode(document.body);
@@ -824,11 +825,13 @@ def generate_html(articles, result_file="原版.html"):
       currentPage = 1;
       const keyword = document.getElementById('searchKeyword').value.trim();
       currentSearchKeyword = keyword;
+      // 生成简体和繁体两种关键词
       var keywordSimplified = converterTw2Cn(keyword);
       var keywordTraditional = converterCn2Tw(keyword);
       var lowerKeywordSimplified = keywordSimplified.toLowerCase();
       var lowerKeywordTraditional = keywordTraditional.toLowerCase();
       const searchType = document.getElementById('searchType').value;
+      // 针对必应、谷歌全站搜索，直接打开新页面
       if(searchType === 'siteBing') {{
           let searchUrl = "https://www.bing.com/search?q=" + encodeURIComponent("site:andylee.pro " + keyword);
           window.open(searchUrl, '_blank');
@@ -840,6 +843,8 @@ def generate_html(articles, result_file="原版.html"):
           hideLoading();
           return;
       }}
+
+      // 针对文章内容搜索
       if(searchType === 'article') {{
          allResults = [];
          articlesData.forEach(function(article, articleIndex) {{
@@ -886,6 +891,8 @@ def generate_html(articles, result_file="原版.html"):
          }}
          return;
       }}
+
+      // 针对评论或作者搜索
       allResults = [];
       articlesData.forEach(function(article, articleIndex) {{
         const tempDiv = document.createElement('div');
@@ -953,11 +960,13 @@ def generate_html(articles, result_file="原版.html"):
             li.style.backgroundColor = "#fff5cc";
           }}
         }}
+        // 如果是文章搜索的结果，则直接显示 text（其格式为 时间 - 标题 - 内容预览 ）
         if(result.id.startsWith("article-")) {{
            li.innerHTML = result.text;
         }} else {{
            li.innerHTML = `<strong>${{result.articleTitle}}</strong> - ${{result.text}}`;
         }}
+        // 初始化新生成节点的原始文本，并立即应用当前语言转换
         initOriginalText(li);
         applyLanguageToNode(li);
         li.onclick = function() {{
@@ -971,6 +980,7 @@ def generate_html(articles, result_file="原版.html"):
           document.getElementById('articleDropdown').value = targetArticleIndex;
           changeArticle();
           setTimeout(function() {{
+            // 若是文章搜索结果，则跳转到文章 header，否则定位到具体评论
             if(result.id.startsWith("article-")) {{
               const articleElem = document.getElementById('articleComments');
               const articleHeader = articleElem.querySelector('.article-header');
@@ -1085,6 +1095,7 @@ def generate_html(articles, result_file="原版.html"):
         }}
       }}
     }}
+    // 新增：点击文章标题或内容后消除红框和黄色高亮
     function removeArticleHighlight(elem) {{
       elem.classList.remove('article-search-highlight');
       const highlights = elem.querySelectorAll('.keyword-highlight');
@@ -1110,7 +1121,7 @@ def generate_html(articles, result_file="原版.html"):
     function scrollToTop() {{
       window.scrollTo({{top: 0, behavior: 'smooth'}});
     }}
-    /* 文章选择及分页 */
+    /* ---------------- 文章选择及分页 ---------------- */
     const articlesData = {articles_json};
     const articlesPerPage = 10;
     let currentArticlePage = 1;
@@ -1135,9 +1146,11 @@ def generate_html(articles, result_file="原版.html"):
         const option = document.createElement('option');
         option.value = start + index;
         option.text = article.title;
+        // 保存原始文本，确保语言转换时能更新
         option._originalText = article.title;
         dropdown.appendChild(option);
       }});
+      // 更新下拉框内文本，确保语言转换生效
       initOriginalText(dropdown);
       applyLanguageToNode(dropdown);
     }}
@@ -1147,8 +1160,13 @@ def generate_html(articles, result_file="原版.html"):
       const article = articlesData[articleIndex];
       const articleCommentsElem = document.getElementById('articleComments');
       articleCommentsElem.innerHTML = article.comments_html;
+      // 初始化新内容中的原始文本
       initOriginalText(articleCommentsElem);
-      applyLanguageToNode(articleCommentsElem);
+      // 重新应用全文语言转换，确保当前语言设置生效
+      changeLanguage();
+      articleCommentsElem.querySelectorAll('.comment.reply').forEach(function(comment) {{
+          comment.style.backgroundColor = currentColor;
+      }});
     }}
     function displayArticlePagination() {{
       const paginationContainer = document.getElementById('articlePagination');
@@ -1216,6 +1234,7 @@ def generate_html(articles, result_file="原版.html"):
       }}
       paginationContainer.appendChild(bottomLine);
     }}
+    /* ---------- 文章上一篇/下一篇功能 ---------- */
     function goToArticle(index, autoScroll) {{
       var totalArticles = articlesData.length;
       if(index < 0 || index >= totalArticles) return;
@@ -1255,7 +1274,7 @@ def generate_html(articles, result_file="原版.html"):
            alert("已经是最后一篇文章了");
       }}
     }}
-    /* 设置面板功能 */
+    /* --------------- 设置面板功能 --------------- */
     function openSettings() {{
       document.getElementById('settingsModal').style.display = 'block';
       const settings = localStorage.getItem('userSettings');
@@ -1267,7 +1286,7 @@ def generate_html(articles, result_file="原版.html"):
         document.getElementById('fontFamilySelect').value = obj.fontFamily;
         document.getElementById('textColorInput').value = obj.textColor;
         var bg = obj.bgColor || "white";
-        var presets = ["lightblue", "lightgreen", "lightcoral", "lightyellow", "thistle", "white"];
+        var presets = ["aliceblue", "honeydew", "mistyrose", "ivory", "lavender", "white"];
         if (presets.indexOf(bg) !== -1) {{
           document.getElementById('bgColorSelect').value = bg;
           document.getElementById('customBgColorContainer').style.display = 'none';
@@ -1286,6 +1305,7 @@ def generate_html(articles, result_file="原版.html"):
       var sel = document.getElementById('bgColorSelect').value;
       document.getElementById('customBgColorContainer').style.display = (sel === "custom") ? 'block' : 'none';
     }}
+    // 更新布局风格
     function updateLayoutStyle(style) {{
       var articleCommentsElem = document.getElementById('articleComments');
       if (style === 'list') {{
@@ -1309,8 +1329,17 @@ def generate_html(articles, result_file="原版.html"):
       document.documentElement.style.setProperty('--line-height', lineHeight);
       document.documentElement.style.setProperty('--font-family', fontFamily);
       document.documentElement.style.setProperty('--text-color', textColor);
-      document.documentElement.style.setProperty('--bg-area', bgColor);
+      // 更新全屏背景颜色
+      document.documentElement.style.setProperty('--background-color', bgColor);
+      // 根据字体大小计算标题大小（约1.375倍）
+      var headingSize = Math.round(parseFloat(fontSize) * 1.375);
+      document.documentElement.style.setProperty('--heading-size', headingSize + 'px');
 
+      currentColor = bgColor;
+      document.querySelectorAll('.comment.reply').forEach(function(comment) {{
+        comment.style.backgroundColor = currentColor; 
+      }});
+      // 应用布局风格
       updateLayoutStyle(layoutStyle);
 
       const settings = {{
@@ -1343,6 +1372,7 @@ def generate_html(articles, result_file="原版.html"):
       localStorage.setItem('savedArticlePage', currentArticlePage);
     }});
     window.onload = function() {{
+      // 初始化全文原始文本存储
       initOriginalText(document.body);
       const settings = localStorage.getItem('userSettings');
       if(settings) {{
@@ -1351,7 +1381,8 @@ def generate_html(articles, result_file="原版.html"):
         document.documentElement.style.setProperty('--line-height', obj.lineHeight);
         document.documentElement.style.setProperty('--font-family', obj.fontFamily);
         document.documentElement.style.setProperty('--text-color', obj.textColor);
-        document.documentElement.style.setProperty('--bg-area', obj.bgColor || "white");
+        document.documentElement.style.setProperty('--background-color', obj.bgColor || "#f4f4f9");
+        currentColor = obj.bgColor || "white";
         updateLayoutStyle(obj.layoutStyle || "card");
       }}
       const savedArticlePage = localStorage.getItem('savedArticlePage');
@@ -1362,9 +1393,11 @@ def generate_html(articles, result_file="原版.html"):
       document.querySelectorAll('.comment .comment-text a').forEach(function(a) {{
         a.target = '_blank';
       }});
+      // 根据当前语言更新全文显示（默认 original，不转换）
       applyLanguageToNode(document.body);
     }}
-    /* 暗黑模式切换函数 */
+    let currentColor = "white";
+    /* ---------------- 暗黑模式切换函数（在HTML按钮里调用） ---------------- */
     function toggleDarkMode() {{
       document.body.classList.toggle('dark-mode');
     }}
@@ -1377,12 +1410,10 @@ def generate_html(articles, result_file="原版.html"):
         f.write(html_content)
     print(f"已生成文件：{result_file}")
 
-
 def main():
-    data_folder = "data"  # 数据目录中应包含 "page" 和 "fixed" 文件夹
-    articles = read_and_sort_data(data_folder)
+    datatest_folder = "datatest"  # 数据目录中应包含 "page" 和 "fixed" 文件夹
+    articles = read_and_sort_datatest(datatest_folder)
     generate_html(articles)
-
 
 if __name__ == "__main__":
     main()
