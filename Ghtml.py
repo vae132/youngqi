@@ -10,7 +10,7 @@ def read_and_sort_data(data_folder):
     for folder_name in os.listdir(data_folder):
         folder_path = os.path.join(data_folder, folder_name)
         if os.path.isdir(folder_path):
-            # 針對 fixed 文件夾，讀取其中所有 JSON 文件（該文件夾內無子文件夾）
+            # 针对 fixed 文件夹，读取其中所有 JSON 文件（该文件夹内无子文件夹）
             if folder_name == "fixed":
                 for filename in os.listdir(folder_path):
                     if filename.endswith(".json"):
@@ -20,7 +20,7 @@ def read_and_sort_data(data_folder):
                                 data["page"] = 9999
                             articles.append(data)
             else:
-                # 其他子文件夾，例如 "page"
+                # 其他子文件夹，例如 "page"
                 for filename in os.listdir(folder_path):
                     if filename.endswith(".json"):
                         with open(os.path.join(folder_path, filename), 'r', encoding='utf-8') as f:
@@ -428,7 +428,6 @@ def generate_html(articles, result_file="原版.html"):
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       transition: background-color 0.3s, transform 0.2s;
       cursor: pointer;
-      /* 防止长英文或网址超出边界 */
       word-wrap: break-word;
       overflow-wrap: break-word;
       white-space: normal;
@@ -440,6 +439,14 @@ def generate_html(articles, result_file="原版.html"):
       border: 1px solid #444;
       box-shadow: 0 2px 4px rgba(0,0,0,0.7);
     }}
+    /* 新增：特殊高亮（作者为李宗恩或andy） */
+    .special-highlight {{
+      background-color: #fff5cc;
+    }}
+    body.dark-mode .special-highlight {{
+      background-color: rgba(255,245,204,0.3);
+    }}
+
     /* 文章评论下拉选择框 */
     #articleDropdown {{
       padding: 12px;
@@ -529,11 +536,16 @@ def generate_html(articles, result_file="原版.html"):
       color: #ccc;
       border: 1px solid #555;
     }}
+    /* 新增：暗黑模式下点击搜索结果时添加红色边框高亮 */
+    body.dark-mode .highlighted-comment,
+    body.dark-mode .search-highlight,
+    body.dark-mode .article-search-highlight {{
+      border: 4px solid red !important;
+    }}
 
     /* ==================== 手机端优化 ==================== */
     @media (max-width: 768px) {{
       header h1 {{ font-size: 18px; }}
-      /* 让下拉框在手机端和其他按钮一样大小 */
       .btn-header,
       select.btn-header {{
         font-size: 12px;
@@ -566,7 +578,6 @@ def generate_html(articles, result_file="原版.html"):
       border-bottom: 1px solid #ccc;
       border-radius: 0 !important;
     }}
-    /* 以下规则仅在电脑端生效，使列表布局居中 */
     @media (min-width: 769px) {{
       #articleComments.layout-list {{
           display: flex;
@@ -578,7 +589,6 @@ def generate_html(articles, result_file="原版.html"):
           max-width: 800px;
       }}
     }}
-    /* 新增：列表布局下高亮效果使用红色边框 */
     #articleComments.layout-list .comment.highlighted-comment,
     #articleComments.layout-list .comment.search-highlight {{
         border: 4px solid #ff8888 !important;
@@ -632,7 +642,6 @@ def generate_html(articles, result_file="原版.html"):
       border-radius: 5px;
       cursor: pointer;
     }}
-    /* 新增：确保图片、iframe、embed、object、video 等媒体资源在手机上不会超出容器宽度 */
     img, iframe, embed, object, video {{
       max-width: 100%;
       height: auto;
@@ -645,7 +654,7 @@ def generate_html(articles, result_file="原版.html"):
       <h1>阳气诊所</h1>
       <button class="btn btn-header" onclick="toggleDarkMode()">切换暗黑模式</button>
       <button class="btn btn-header" onclick="openSettings()">设置</button>
-      <!-- 语言切换下拉框，也使用 btn btn-header，让它和其他按钮在手机端同尺寸 -->
+      <!-- 语言切换下拉框 -->
       <select id="languageSelect" onchange="changeLanguage()" class="btn btn-header">
         <option value="original">原内容</option>
         <option value="traditional">繁體</option>
@@ -706,7 +715,6 @@ def generate_html(articles, result_file="原版.html"):
           <option value="Verdana, sans-serif">Verdana</option>
           <option value="'Courier New', monospace">Courier New</option>
           <option value="Georgia, serif">Georgia</option>
-          <!-- 新增中文常用字体 -->
           <option value="'Microsoft YaHei', sans-serif">微软雅黑</option>
           <option value="'SimSun', serif">宋体</option>
           <option value="'SimHei', serif">黑体</option>
@@ -715,26 +723,25 @@ def generate_html(articles, result_file="原版.html"):
           <option value="'PingFang SC', sans-serif">苹方</option>
         </select>
       </div>
-      <!-- 背景颜色设置 -->
+      <!-- 新增：主题选择（新增“无主题”选项） -->
       <div style="border-bottom: 1px solid #ccc; margin-bottom: 10px; padding-bottom: 10px;">
-        <h3>背景颜色设置</h3>
-        <label for="bgColorSelect">选择背景色:</label>
-        <select id="bgColorSelect" onchange="onBgColorSelectChange()">
-          <!-- 修改预设颜色为更适合阅读的颜色 -->
-          <option value="aliceblue">清晨湛蓝</option>
-          <option value="honeydew">蜜意清绿</option>
-          <option value="mistyrose">轻纱玫瑰</option>
-          <option value="ivory">象牙白</option>
-          <option value="lavender">薰衣草紫</option>
-          <option value="white" selected>素雪</option>
-          <option value="custom">自定义</option>
+        <h3>主题选择</h3>
+        <label for="themeSelect">选择主题:</label>
+        <select id="themeSelect">
+          <option value="none" selected>无主题</option>
+          <optgroup label="中国风">
+            <option value="chinese1">墨韵山水</option>
+            <option value="chinese2">书香古韵</option>
+            <option value="chinese3">云水谣</option>
+          </optgroup>
+          <optgroup label="其他风格">
+            <option value="modern1">清风雅韵</option>
+            <option value="modern2">现代简约</option>
+            <option value="modern3">经典时光</option>
+          </optgroup>
         </select>
-        <div id="customBgColorContainer" style="display: none; margin-top: 10px;">
-          <label for="customBgColorInput">自定义颜色:</label>
-          <input type="color" id="customBgColorInput" value="#ffffff">
-        </div>
       </div>
-      <!-- 新增：布局风格设置 -->
+      <!-- 布局风格设置 -->
       <div style="border-bottom: 1px solid #ccc; margin-bottom: 10px; padding-bottom: 10px;">
         <h3>布局风格设置</h3>
         <label for="layoutStyleSelect">选择布局风格:</label>
@@ -765,7 +772,6 @@ def generate_html(articles, result_file="原版.html"):
     }}
 
     /* ---------------- 全文语言切换相关函数 ---------------- */
-    // 遍历 DOM，记录所有文本节点的原始内容（排除 SCRIPT/STYLE/等）
     function initOriginalText(root) {{
       if (root.nodeType === Node.TEXT_NODE) {{
         if (root.textContent.trim() !== "") {{
@@ -780,7 +786,6 @@ def generate_html(articles, result_file="原版.html"):
       }}
     }}
 
-    // 根据 currentLanguage 更新文本节点内容
     function applyLanguageToNode(root) {{
       if (root.nodeType === Node.TEXT_NODE) {{
         if (root._originalText === undefined) {{
@@ -800,7 +805,6 @@ def generate_html(articles, result_file="原版.html"):
       }}
     }}
 
-    // 切换语言
     function changeLanguage() {{
       currentLanguage = document.getElementById("languageSelect").value;
       applyLanguageToNode(document.body);
@@ -825,13 +829,11 @@ def generate_html(articles, result_file="原版.html"):
       currentPage = 1;
       const keyword = document.getElementById('searchKeyword').value.trim();
       currentSearchKeyword = keyword;
-      // 生成简体和繁体两种关键词
       var keywordSimplified = converterTw2Cn(keyword);
       var keywordTraditional = converterCn2Tw(keyword);
       var lowerKeywordSimplified = keywordSimplified.toLowerCase();
       var lowerKeywordTraditional = keywordTraditional.toLowerCase();
       const searchType = document.getElementById('searchType').value;
-      // 针对必应、谷歌全站搜索，直接打开新页面
       if(searchType === 'siteBing') {{
           let searchUrl = "https://www.bing.com/search?q=" + encodeURIComponent("site:andylee.pro " + keyword);
           window.open(searchUrl, '_blank');
@@ -844,7 +846,6 @@ def generate_html(articles, result_file="原版.html"):
           return;
       }}
 
-      // 针对文章内容搜索
       if(searchType === 'article') {{
          allResults = [];
          articlesData.forEach(function(article, articleIndex) {{
@@ -892,7 +893,6 @@ def generate_html(articles, result_file="原版.html"):
          return;
       }}
 
-      // 针对评论或作者搜索
       allResults = [];
       articlesData.forEach(function(article, articleIndex) {{
         const tempDiv = document.createElement('div');
@@ -955,18 +955,14 @@ def generate_html(articles, result_file="原版.html"):
       paginatedResults.forEach(function(result) {{
         const li = document.createElement('li');
         li.classList.add('search-result-item');
-        if(!document.body.classList.contains('dark-mode')) {{
-          if(result.author.toLowerCase() === "andy" || result.author === "李宗恩") {{
-            li.style.backgroundColor = "#fff5cc";
-          }}
+        if(result.author.toLowerCase() === "andy" || result.author === "李宗恩") {{
+            li.classList.add('special-highlight');
         }}
-        // 如果是文章搜索的结果，则直接显示 text（其格式为 时间 - 标题 - 内容预览 ）
         if(result.id.startsWith("article-")) {{
            li.innerHTML = result.text;
         }} else {{
            li.innerHTML = `<strong>${{result.articleTitle}}</strong> - ${{result.text}}`;
         }}
-        // 初始化新生成节点的原始文本，并立即应用当前语言转换
         initOriginalText(li);
         applyLanguageToNode(li);
         li.onclick = function() {{
@@ -980,7 +976,6 @@ def generate_html(articles, result_file="原版.html"):
           document.getElementById('articleDropdown').value = targetArticleIndex;
           changeArticle();
           setTimeout(function() {{
-            // 若是文章搜索结果，则跳转到文章 header，否则定位到具体评论
             if(result.id.startsWith("article-")) {{
               const articleElem = document.getElementById('articleComments');
               const articleHeader = articleElem.querySelector('.article-header');
@@ -1095,7 +1090,6 @@ def generate_html(articles, result_file="原版.html"):
         }}
       }}
     }}
-    // 新增：点击文章标题或内容后消除红框和黄色高亮
     function removeArticleHighlight(elem) {{
       elem.classList.remove('article-search-highlight');
       const highlights = elem.querySelectorAll('.keyword-highlight');
@@ -1146,11 +1140,9 @@ def generate_html(articles, result_file="原版.html"):
         const option = document.createElement('option');
         option.value = start + index;
         option.text = article.title;
-        // 保存原始文本，确保语言转换时能更新
         option._originalText = article.title;
         dropdown.appendChild(option);
       }});
-      // 更新下拉框内文本，确保语言转换生效
       initOriginalText(dropdown);
       applyLanguageToNode(dropdown);
     }}
@@ -1160,9 +1152,7 @@ def generate_html(articles, result_file="原版.html"):
       const article = articlesData[articleIndex];
       const articleCommentsElem = document.getElementById('articleComments');
       articleCommentsElem.innerHTML = article.comments_html;
-      // 初始化新内容中的原始文本
       initOriginalText(articleCommentsElem);
-      // 重新应用全文语言转换，确保当前语言设置生效
       changeLanguage();
       articleCommentsElem.querySelectorAll('.comment.reply').forEach(function(comment) {{
           comment.style.backgroundColor = currentColor;
@@ -1234,7 +1224,6 @@ def generate_html(articles, result_file="原版.html"):
       }}
       paginationContainer.appendChild(bottomLine);
     }}
-    /* ---------- 文章上一篇/下一篇功能 ---------- */
     function goToArticle(index, autoScroll) {{
       var totalArticles = articlesData.length;
       if(index < 0 || index >= totalArticles) return;
@@ -1285,15 +1274,10 @@ def generate_html(articles, result_file="原版.html"):
         document.getElementById('lineHeightInput').value = obj.lineHeight;
         document.getElementById('fontFamilySelect').value = obj.fontFamily;
         document.getElementById('textColorInput').value = obj.textColor;
-        var bg = obj.bgColor || "white";
-        var presets = ["aliceblue", "honeydew", "mistyrose", "ivory", "lavender", "white"];
-        if (presets.indexOf(bg) !== -1) {{
-          document.getElementById('bgColorSelect').value = bg;
-          document.getElementById('customBgColorContainer').style.display = 'none';
+        if(obj.theme) {{
+          document.getElementById('themeSelect').value = obj.theme;
         }} else {{
-          document.getElementById('bgColorSelect').value = "custom";
-          document.getElementById('customBgColorContainer').style.display = 'block';
-          document.getElementById('customBgColorInput').value = bg;
+          document.getElementById('themeSelect').value = "none";
         }}
         document.getElementById('layoutStyleSelect').value = obj.layoutStyle || "card";
       }}
@@ -1301,11 +1285,6 @@ def generate_html(articles, result_file="原版.html"):
     function closeSettings() {{
       document.getElementById('settingsModal').style.display = 'none';
     }}
-    function onBgColorSelectChange() {{
-      var sel = document.getElementById('bgColorSelect').value;
-      document.getElementById('customBgColorContainer').style.display = (sel === "custom") ? 'block' : 'none';
-    }}
-    // 更新布局风格
     function updateLayoutStyle(style) {{
       var articleCommentsElem = document.getElementById('articleComments');
       if (style === 'list') {{
@@ -1321,34 +1300,96 @@ def generate_html(articles, result_file="原版.html"):
       const lineHeight = document.getElementById('lineHeightInput').value;
       const fontFamily = document.getElementById('fontFamilySelect').value;
       const textColor = document.getElementById('textColorInput').value;
-      var selectedBg = document.getElementById('bgColorSelect').value;
-      var bgColor = (selectedBg === "custom") ? document.getElementById('customBgColorInput').value : selectedBg;
-      const layoutStyle = document.getElementById('layoutStyleSelect').value;
-
       document.documentElement.style.setProperty('--font-size', fontSize + 'px');
       document.documentElement.style.setProperty('--line-height', lineHeight);
       document.documentElement.style.setProperty('--font-family', fontFamily);
       document.documentElement.style.setProperty('--text-color', textColor);
-      // 更新全屏背景颜色
-      document.documentElement.style.setProperty('--background-color', bgColor);
-      // 根据字体大小计算标题大小（约1.375倍）
       var headingSize = Math.round(parseFloat(fontSize) * 1.375);
       document.documentElement.style.setProperty('--heading-size', headingSize + 'px');
 
-      currentColor = bgColor;
+      currentColor = getComputedStyle(document.documentElement).getPropertyValue('--background-color');
       document.querySelectorAll('.comment.reply').forEach(function(comment) {{
-        comment.style.backgroundColor = currentColor; 
+        comment.style.backgroundColor = currentColor;
       }});
-      // 应用布局风格
+      const layoutStyle = document.getElementById('layoutStyleSelect').value;
       updateLayoutStyle(layoutStyle);
 
+      const theme = document.getElementById('themeSelect').value;
+      const themeSettings = {{
+          "chinese1": {{
+              "--primary-color": "#2c3e50",
+              "--secondary-color": "#7f8c8d",
+              "--background-color": "#f8f1e5",
+              "--btn-bg": "#2c3e50",
+              "--btn-hover": "#7f8c8d"
+          }},
+          "chinese2": {{
+              "--primary-color": "#8d6e63",
+              "--secondary-color": "#d7ccc8",
+              "--background-color": "#fff8e1",
+              "--btn-bg": "#8d6e63",
+              "--btn-hover": "#d7ccc8"
+          }},
+          "chinese3": {{
+              "--primary-color": "#00897b",
+              "--secondary-color": "#80cbc4",
+              "--background-color": "#e0f2f1",
+              "--btn-bg": "#00897b",
+              "--btn-hover": "#80cbc4"
+          }},
+          "modern1": {{
+              "--primary-color": "#4caf50",
+              "--secondary-color": "#81c784",
+              "--background-color": "#e8f5e9",
+              "--btn-bg": "#4caf50",
+              "--btn-hover": "#81c784"
+          }},
+          "modern2": {{
+              "--primary-color": "#2196f3",
+              "--secondary-color": "#90caf9",
+              "--background-color": "#e3f2fd",
+              "--btn-bg": "#2196f3",
+              "--btn-hover": "#90caf9"
+          }},
+          "modern3": {{
+              /* 修改后的经典时光配色，更适合阅读 */
+              "--primary-color": "#3e2723",
+              "--secondary-color": "#5d4037",
+              "--background-color": "#f3e0dc",
+              "--btn-bg": "#3e2723",
+              "--btn-hover": "#5d4037"
+          }}
+      }};
+      if(theme !== "none" && themeSettings[theme]) {{
+          const t = themeSettings[theme];
+          for (const key in t) {{
+              document.documentElement.style.setProperty(key, t[key]);
+          }}
+          if(t["--background-color"]) {{
+             currentColor = t["--background-color"];
+          }}
+          document.querySelectorAll('.comment.reply').forEach(function(comment) {{
+              comment.style.backgroundColor = currentColor;
+          }});
+      }} else {{
+          /* 选择无主题时，立即恢复默认样式 */
+          document.documentElement.style.setProperty('--primary-color', '#667eea');
+          document.documentElement.style.setProperty('--secondary-color', '#764ba2');
+          document.documentElement.style.setProperty('--background-color', '#f4f4f9');
+          document.documentElement.style.setProperty('--btn-bg', '#667eea');
+          document.documentElement.style.setProperty('--btn-hover', '#556cd6');
+          currentColor = getComputedStyle(document.documentElement).getPropertyValue('--background-color');
+          document.querySelectorAll('.comment.reply').forEach(function(comment) {{
+              comment.style.backgroundColor = currentColor;
+          }});
+      }}
       const settings = {{
         fontSize: fontSize,
         lineHeight: lineHeight,
         fontFamily: fontFamily,
         textColor: textColor,
-        bgColor: bgColor,
-        layoutStyle: layoutStyle
+        layoutStyle: layoutStyle,
+        theme: theme
       }};
       localStorage.setItem('userSettings', JSON.stringify(settings));
       closeSettings();
@@ -1359,9 +1400,8 @@ def generate_html(articles, result_file="原版.html"):
       document.getElementById('lineHeightInput').value = 1.6;
       document.getElementById('fontFamilySelect').value = "Roboto, sans-serif";
       document.getElementById('textColorInput').value = "#333333";
-      document.getElementById('bgColorSelect').value = "white";
-      document.getElementById('customBgColorContainer').style.display = 'none';
       document.getElementById('layoutStyleSelect').value = "card";
+      document.getElementById('themeSelect').value = "none";
       applySettings();
     }}
     window.addEventListener("beforeunload", function() {{
@@ -1372,18 +1412,19 @@ def generate_html(articles, result_file="原版.html"):
       localStorage.setItem('savedArticlePage', currentArticlePage);
     }});
     window.onload = function() {{
-      // 初始化全文原始文本存储
       initOriginalText(document.body);
       const settings = localStorage.getItem('userSettings');
       if(settings) {{
         const obj = JSON.parse(settings);
-        document.documentElement.style.setProperty('--font-size', obj.fontSize + 'px');
-        document.documentElement.style.setProperty('--line-height', obj.lineHeight);
-        document.documentElement.style.setProperty('--font-family', obj.fontFamily);
-        document.documentElement.style.setProperty('--text-color', obj.textColor);
-        document.documentElement.style.setProperty('--background-color', obj.bgColor || "#f4f4f9");
-        currentColor = obj.bgColor || "white";
-        updateLayoutStyle(obj.layoutStyle || "card");
+        document.getElementById('fontSizeInput').value = obj.fontSize;
+        document.getElementById('fontSizeVal').innerText = obj.fontSize;
+        document.getElementById('lineHeightInput').value = obj.lineHeight;
+        document.getElementById('fontFamilySelect').value = obj.fontFamily;
+        document.getElementById('textColorInput').value = obj.textColor;
+        document.getElementById('themeSelect').value = obj.theme || "none";
+        document.getElementById('layoutStyleSelect').value = obj.layoutStyle || "card";
+        // 使上次设置立即生效
+        applySettings();
       }}
       const savedArticlePage = localStorage.getItem('savedArticlePage');
       if(savedArticlePage !== null) {{
@@ -1393,11 +1434,9 @@ def generate_html(articles, result_file="原版.html"):
       document.querySelectorAll('.comment .comment-text a').forEach(function(a) {{
         a.target = '_blank';
       }});
-      // 根据当前语言更新全文显示（默认 original，不转换）
       applyLanguageToNode(document.body);
     }}
     let currentColor = "white";
-    /* ---------------- 暗黑模式切换函数（在HTML按钮里调用） ---------------- */
     function toggleDarkMode() {{
       document.body.classList.toggle('dark-mode');
     }}
