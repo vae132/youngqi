@@ -68,7 +68,7 @@ def parse_comment(comment, article_url, level=0, selected_color="white", index=0
     return html, index
 
 # 生成完整 HTML 页面
-def generate_html(articles, result_file="原版.html"):
+def generate_html(articles, result_file="index.html"):
     articles_data = []
     for article in articles:
         article_url = article["article_url"]
@@ -210,12 +210,19 @@ def generate_html(articles, result_file="原版.html"):
       appearance: none;
       background-color: var(--btn-bg); /* 按钮背景色 */
       color: #fff;                    /* 按钮文字色 */
-      padding: 8px 16px;
-      font-size: 16px;
+      padding: 12px 20px;             /* 增加内边距，调整尺寸 */
+      font-size: 18px;                /* 增大字体 */
       border: 2px solid #fff;
       margin-left: 10px;
       border-radius: 12px;
       cursor: pointer;
+    }}
+    /* 保持下拉框点击时背景色不变 */
+    select.btn-header:focus,
+    select.btn-header:active {{
+      background-color: var(--btn-bg);
+      color: #fff;
+      outline: none;
     }}
     select.btn-header option {{
       background-color: #fff;
@@ -259,6 +266,12 @@ def generate_html(articles, result_file="原版.html"):
       cursor: pointer;
       display: none;
       border-radius: 5px;
+    }}
+    /* 新增：搜索结果额外控制按钮区域 */
+    #searchExtraControls {{
+      text-align: center;
+      margin: 10px 0;
+      display: none;
     }}
     /* 文章内容 */
     .article-header {{
@@ -380,8 +393,8 @@ def generate_html(articles, result_file="原版.html"):
     }}
     /* 新增：文章搜索后标题或内容红框高亮（点击后消失） */
     .article-search-highlight {{
-      border: 4px solid red;
-      background-color: transparent;
+       border: 4px solid red !important;
+       background-color: transparent !important;
     }}
     /* 分页样式 */
     .pagination {{
@@ -567,6 +580,11 @@ def generate_html(articles, result_file="原版.html"):
       .comment .comment-text {{
         font-size: var(--font-size);
       }}
+       /* 手机端优化：增大时间排序和作者过滤下拉框大小 */
+      #timeSortDropdown, #filterDropdown {{
+         font-size: 14px !important;
+         padding: 12px 12px !important;
+      }}
     }}
 
     /* 列表布局：卡片布局与列表布局切换 */
@@ -674,6 +692,8 @@ def generate_html(articles, result_file="原版.html"):
     <button id="searchButton" class="btn" onclick="searchComments()" disabled>搜索</button>
     <button class="btn btn-danger search-close-btn" id="searchCloseButton" onclick="closeSearchResults()">关闭搜索结果</button>
   </div>
+  <!-- 新增：搜索结果额外控制区域，下拉框形式 -->
+  <div id="searchExtraControls"></div>
   <div id="loadingIndicator" class="loading-indicator">Loading...</div>
   <div id="searchCount"></div>
   <div id="pagination" class="pagination"></div>
@@ -765,6 +785,9 @@ def generate_html(articles, result_file="原版.html"):
     /* ---------------- 全局变量 ---------------- */
     var currentSearchKeyword = "";
     var currentLanguage = "original"; // "original"、"traditional"、"simplified"
+    // 修改：全局控制搜索结果的时间排序及作者过滤状态，初始为默认（不排序）和显示全部
+    var currentSortOrder = "default"; // "default", "asc" 或 "desc"
+    var filterSpecialAuthors = false; // false：全部结果；true：只显示作者为 "李宗恩" 或 "andy"
 
     /* ---------------- 辅助函数 ---------------- */
     function escapeRegExp(string) {{
@@ -824,11 +847,15 @@ def generate_html(articles, result_file="原版.html"):
     function hideLoading() {{
       document.getElementById('loadingIndicator').style.display = 'none';
     }}
+    // 搜索函数，支持根据不同类型（文章、评论、作者）搜索，并为每个结果添加统一的 time 属性
     function searchComments() {{
       showLoading();
       currentPage = 1;
       const keyword = document.getElementById('searchKeyword').value.trim();
       currentSearchKeyword = keyword;
+      // 每次搜索重置排序和过滤状态
+      currentSortOrder = "default";
+      filterSpecialAuthors = false;
       var keywordSimplified = converterTw2Cn(keyword);
       var keywordTraditional = converterCn2Tw(keyword);
       var lowerKeywordSimplified = keywordSimplified.toLowerCase();
@@ -846,8 +873,8 @@ def generate_html(articles, result_file="原版.html"):
           return;
       }}
 
+      allResults = [];
       if(searchType === 'article') {{
-         allResults = [];
          articlesData.forEach(function(article, articleIndex) {{
              const tempDiv = document.createElement('div');
              tempDiv.innerHTML = article.comments_html;
@@ -870,10 +897,12 @@ def generate_html(articles, result_file="原版.html"):
                  }}
                  const previewText = articleContentElem ? articleContentElem.innerText.slice(0,60) + '...' : "";
                  const articleTime = article.article_time || "未知时间";
+                 // 为了统一排序，增加 time 属性
                  allResults.push({{
                     id: "article-" + articleIndex,
                     articleTitle: article.title,
                     articleTime: articleTime,
+                    time: articleTime,
                     text: articleTime + " - " + article.title + " - " + previewText,
                     articleIndex: articleIndex,
                     foundInHeader: foundInHeader,
@@ -882,80 +911,118 @@ def generate_html(articles, result_file="原版.html"):
                  }});
              }}
          }});
-         hideLoading();
-         displayPageResults();
-         if (allResults.length > 0) {{
-             document.getElementById('searchCloseButton').style.display = 'inline-block';
-         }} else {{
-             document.getElementById('searchCloseButton').style.display = 'none';
-             alert("没有找到匹配的文章！");
-         }}
-         return;
-      }}
-
-      allResults = [];
-      articlesData.forEach(function(article, articleIndex) {{
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = article.comments_html;
-        const commentElems = tempDiv.querySelectorAll('.comment');
-        commentElems.forEach(function(commentElem) {{
-          let textToSearch = "";
-          if (searchType === 'comment') {{
-            const commentTextElem = commentElem.querySelector('.comment-text');
-            if (commentTextElem) {{
-              textToSearch = commentTextElem.innerText.toLowerCase();
-            }}
-          }} else if (searchType === 'author') {{
-            const authorElem = commentElem.querySelector('.author');
-            if (authorElem) {{
-              textToSearch = authorElem.innerText.toLowerCase();
-            }}
-          }}
-          if (textToSearch.indexOf(lowerKeywordSimplified) !== -1 || textToSearch.indexOf(lowerKeywordTraditional) !== -1) {{
-            const commentTextElem = commentElem.querySelector('.comment-text');
-            if (commentTextElem) {{
-              var pattern = '(' + escapeRegExp(keywordSimplified) + '|' + escapeRegExp(keywordTraditional) + ')';
-              const reg = new RegExp(pattern, 'gi');
-              commentTextElem.innerHTML = commentTextElem.innerHTML.replace(reg, '<span class="keyword-highlight">$1</span>');
-            }}
-            const author = commentElem.querySelector('.author') ? commentElem.querySelector('.author').innerText : "";
-            const timeElem = commentElem.querySelector('.time');
-            const time = timeElem ? timeElem.innerText : "";
-            const commentPreview = commentElem.querySelector('.comment-text') ? commentElem.querySelector('.comment-text').innerText.slice(0, 60) + '...' : "";
-            const commentId = commentElem.id;
-            allResults.push({{
-              id: commentId,
-              articleTitle: article.title,
-              text: author + " - " + time + " : " + commentPreview,
-              articleIndex: articleIndex,
-              author: author
+      }} else {{
+         articlesData.forEach(function(article, articleIndex) {{
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = article.comments_html;
+            const commentElems = tempDiv.querySelectorAll('.comment');
+            commentElems.forEach(function(commentElem) {{
+              let textToSearch = "";
+              if (searchType === 'comment') {{
+                const commentTextElem = commentElem.querySelector('.comment-text');
+                if (commentTextElem) {{
+                  textToSearch = commentTextElem.innerText.toLowerCase();
+                }}
+              }} else if (searchType === 'author') {{
+                const authorElem = commentElem.querySelector('.author');
+                if (authorElem) {{
+                  textToSearch = authorElem.innerText.toLowerCase();
+                }}
+              }}
+              if (textToSearch.indexOf(lowerKeywordSimplified) !== -1 || textToSearch.indexOf(lowerKeywordTraditional) !== -1) {{
+                const commentTextElem = commentElem.querySelector('.comment-text');
+                if (commentTextElem) {{
+                  var pattern = '(' + escapeRegExp(keywordSimplified) + '|' + escapeRegExp(keywordTraditional) + ')';
+                  const reg = new RegExp(pattern, 'gi');
+                  commentTextElem.innerHTML = commentTextElem.innerHTML.replace(reg, '<span class="keyword-highlight">$1</span>');
+                }}
+                const author = commentElem.querySelector('.author') ? commentElem.querySelector('.author').innerText : "";
+                const timeElem = commentElem.querySelector('.time');
+                const time = timeElem ? timeElem.innerText : "";
+                const commentPreview = commentElem.querySelector('.comment-text') ? commentElem.querySelector('.comment-text').innerText.slice(0, 60) + '...' : "";
+                const commentId = commentElem.id;
+                // 增加 time 属性便于排序
+                allResults.push({{
+                  id: commentId,
+                  articleTitle: article.title,
+                  text: author + " - " + time + " : " + commentPreview,
+                  articleIndex: articleIndex,
+                  author: author,
+                  time: time
+                }});
+              }}
             }});
-          }}
-        }});
-      }});
+         }});
+      }}
       hideLoading();
       displayPageResults();
+      // 如果搜索结果存在，则显示关闭搜索结果按钮和新增的控制下拉框
       if (allResults.length > 0) {{
-        document.getElementById('searchCloseButton').style.display = 'inline-block';
+          document.getElementById('searchCloseButton').style.display = 'inline-block';
+          document.getElementById('searchExtraControls').style.display = 'block';
+          // 根据搜索类型构建下拉列表：如果是文章搜索，则只显示时间排序下拉框
+          let extraHtml = '<select id="timeSortDropdown" class="btn btn-header" onchange="onTimeSortChange()">' +
+                          '<option value="default">默认排序</option>' +
+                          '<option value="asc">时间排序：升序</option>' +
+                          '<option value="desc">时间排序：降序</option>' +
+                          '</select>';
+          if(searchType === "comment" || searchType === "author") {{
+              extraHtml += '<select id="filterDropdown" class="btn btn-header" onchange="onFilterChange()">' +
+                           '<option value="all">全部回复</option>' +
+                           '<option value="special">仅看李宗恩/andy回复</option>' +
+                           '</select>';
+          }}
+          document.getElementById('searchExtraControls').innerHTML = extraHtml;
       }} else {{
-        document.getElementById('searchCloseButton').style.display = 'none';
-        alert("没有找到匹配的评论！");
+          document.getElementById('searchCloseButton').style.display = 'none';
+          document.getElementById('searchExtraControls').style.display = 'none';
+          alert("没有找到匹配的" + (searchType === 'article' ? "文章" : "评论") + "！");
       }}
     }}
+    // 新增：时间排序下拉框响应函数
+    function onTimeSortChange() {{
+      currentSortOrder = document.getElementById("timeSortDropdown").value;
+      displayPageResults();
+    }}
+    // 新增：作者过滤下拉框响应函数
+    function onFilterChange() {{
+      const value = document.getElementById("filterDropdown").value;
+      filterSpecialAuthors = (value === "special");
+      displayPageResults();
+    }}
+    // 显示搜索结果（包含分页、排序及过滤）
     function displayPageResults() {{
-      const totalResults = allResults.length;
+      let resultsToDisplay = allResults;
+      // 应用过滤：仅显示作者为李宗恩或andy的回复（若开启过滤）
+      if(filterSpecialAuthors) {{
+        resultsToDisplay = resultsToDisplay.filter(function(result) {{
+           return result.author && (result.author.toLowerCase() === "andy" || result.author === "李宗恩");
+        }});
+      }}
+      // 只有当时间排序选项不是默认时才进行排序
+      function getSortableTime(t) {{
+         return (t === "未知时间") ? "9999" : t;
+      }}
+      if(currentSortOrder !== "default") {{
+         resultsToDisplay.sort(function(a, b) {{
+            let timeA = getSortableTime(a.time);
+            let timeB = getSortableTime(b.time);
+            return (currentSortOrder === "asc") ? timeA.localeCompare(timeB) : timeB.localeCompare(timeA);
+         }});
+      }}
+      const totalResults = resultsToDisplay.length;
       const totalPages = Math.ceil(totalResults / resultsPerPage);
       document.getElementById('searchCount').innerText = "共找到 " + totalResults + " 条记录";
       displayPagination(totalPages);
       const start = (currentPage - 1) * resultsPerPage;
       const end = start + resultsPerPage;
+      const paginatedResults = resultsToDisplay.slice(start, end);
       const resultsContainer = document.getElementById('searchResults');
       resultsContainer.innerHTML = "";
-      const paginatedResults = allResults.slice(start, end);
       paginatedResults.forEach(function(result) {{
         const li = document.createElement('li');
         li.classList.add('search-result-item');
-        if(result.author.toLowerCase() === "andy" || result.author === "李宗恩") {{
+        if(result.author && (result.author.toLowerCase() === "andy" || result.author.toLowerCase() === "李宗恩")) {{
             li.classList.add('special-highlight');
         }}
         if(result.id.startsWith("article-")) {{
@@ -1076,6 +1143,7 @@ def generate_html(articles, result_file="原版.html"):
       document.getElementById('pagination').innerHTML = "";
       document.getElementById('searchCount').innerText = "";
       document.getElementById('searchCloseButton').style.display = 'none';
+      document.getElementById('searchExtraControls').style.display = 'none';
     }}
     function highlightComment(comment) {{
       comment.classList.add('highlighted-comment');
@@ -1352,7 +1420,6 @@ def generate_html(articles, result_file="原版.html"):
               "--btn-hover": "#90caf9"
           }},
           "modern3": {{
-              /* 修改后的经典时光配色，更适合阅读 */
               "--primary-color": "#3e2723",
               "--secondary-color": "#5d4037",
               "--background-color": "#f3e0dc",
