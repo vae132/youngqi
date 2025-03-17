@@ -164,6 +164,11 @@ def generate_html(articles, result_file="index.html"):
       align-items: center;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }}
+    /* 暗黑模式下头部样式（基于原始颜色暗调10%） */
+    body.dark-mode header {{
+      background: linear-gradient(135deg, #5C71D3, #6A4492) !important;
+      color: #ddd !important;
+    }}
     header h1 {{
       font-size: 20px;
     }}
@@ -311,6 +316,10 @@ def generate_html(articles, result_file="index.html"):
     .article-content p {{
       margin: 10px 0;
     }}
+    /* 新增：使评论区内的段落也换两行 */
+    .comment .comment-text p {{
+      margin: 10px 0;
+    }}
     .article-content a {{
       word-wrap: break-word;
       text-decoration: none;
@@ -342,13 +351,12 @@ def generate_html(articles, result_file="index.html"):
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       max-width: 800px;
-      transition: background-color 0.3s, transform 0.2s;
+      transition: background-color 0.3s;
       cursor: pointer;
       background-color: #fff;
     }}
     .comment:hover {{
       background-color: #f9f9f9;
-      transform: translateY(-2px);
     }}
     .comment.highlight {{
       background-color: #fff5cc;
@@ -504,7 +512,8 @@ def generate_html(articles, result_file="index.html"):
     .back-to-top:hover {{
       background-color: var(--btn-hover);
     }}
-    /* 暗黑模式 */
+
+    /* ---------------- 暗黑模式 ---------------- */
     body.dark-mode {{
       background-color: #222;
       color: #ccc;
@@ -554,6 +563,52 @@ def generate_html(articles, result_file="index.html"):
     body.dark-mode .search-highlight,
     body.dark-mode .article-search-highlight {{
       border: 4px solid red !important;
+    }}
+
+    /* ---------------- Dark mode：按钮颜色稍暗（基于原始颜色暗调10%） ---------------- */
+    body.dark-mode .btn,
+    body.dark-mode .jump-btn,
+    body.dark-mode .nav-btn,
+    body.dark-mode .back-to-top {{
+      background-color: #5C71D3 !important;
+      color: #fff !important;
+      border-color: #5C71D3 !important;
+    }}
+    body.dark-mode .btn:hover,
+    body.dark-mode .jump-btn:hover,
+    body.dark-mode .nav-btn:hover,
+    body.dark-mode .back-to-top:hover {{
+      background-color: #4D61C1 !important;
+    }}
+
+    body.dark-mode .btn-success {{
+      background-color: #3C9040 !important;
+    }}
+    body.dark-mode .btn-success:hover {{
+      background-color: #328036 !important;
+    }}
+    body.dark-mode .btn-secondary {{
+      background-color: #E68A00 !important;
+    }}
+    body.dark-mode .btn-secondary:hover {{
+      background-color: #CF7C00 !important;
+    }}
+    body.dark-mode .btn-danger {{
+      background-color: #E64D4D !important;
+    }}
+    body.dark-mode .btn-danger:hover {{
+      background-color: #CA4646 !important;
+    }}
+
+    body.dark-mode .btn-header,
+    body.dark-mode select.btn-header {{
+      background-color: rgba(255,255,255,0.1) !important;
+      color: #fff !important;
+      border-color: rgba(255,255,255,0.7) !important;
+    }}
+    body.dark-mode .btn-header:hover,
+    body.dark-mode select.btn-header:hover {{
+      background-color: rgba(255,255,255,0.2) !important;
     }}
 
     /* ==================== 手机端优化 ==================== */
@@ -897,13 +952,13 @@ def generate_html(articles, result_file="index.html"):
                  }}
                  const previewText = articleContentElem ? articleContentElem.innerText.slice(0,60) + '...' : "";
                  const articleTime = article.article_time || "未知时间";
-                 // 为了统一排序，增加 time 属性
+                 // 修改：结果文本顺序为：文章标题（加粗） - 发布时间 - 文章内容预览
                  allResults.push({{
                     id: "article-" + articleIndex,
                     articleTitle: article.title,
                     articleTime: articleTime,
                     time: articleTime,
-                    text: articleTime + " - " + article.title + " - " + previewText,
+                    text: `<strong>${{article.title}}</strong> - ${{articleTime}} - ${{previewText}}`,
                     articleIndex: articleIndex,
                     foundInHeader: foundInHeader,
                     foundInContent: foundInContent,
@@ -1012,6 +1067,10 @@ def generate_html(articles, result_file="index.html"):
       }}
       const totalResults = resultsToDisplay.length;
       const totalPages = Math.ceil(totalResults / resultsPerPage);
+      // 如果当前页码超过过滤后总页数，则重置为最后一页（或无结果时设为1）
+      if(currentPage > totalPages) {{
+         currentPage = totalPages > 0 ? totalPages : 1;
+      }}
       document.getElementById('searchCount').innerText = "共找到 " + totalResults + " 条记录";
       displayPagination(totalPages);
       const start = (currentPage - 1) * resultsPerPage;
