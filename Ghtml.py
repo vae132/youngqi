@@ -90,10 +90,10 @@ def generate_html(articles, result_file="index.html"):
             f"<div class='article-header'>"
             f"<h2>{article_title}</h2>"
             f"<div class='article-time'>发布时间：{article_time}</div>"
-            f"<a href='{article_url}' class='origin-link' target='_blank'>查看文章原文</a>"
+            f"<a href='{article_url}' class='origin-link' target='_blank'>🔗 查看文章原文</a>"
             f"</div>"
             f"<div class='article-content'>{article_content}</div>"
-            f"<div class='article-divider'><hr><h3>评论内容</h3></div>"
+            f"<div class='article-divider'><hr><h3>💬 评论内容</h3></div>"
             + comments_html
         )
         articles_data.append({
@@ -396,12 +396,12 @@ def generate_html(articles, result_file="index.html"):
       background-color: rgba(255, 255, 0, 0.5);
     }}
     .highlighted-comment, .search-highlight {{
-      border: 4px solid #ff8888;
+      border: 4px solid #ff8888!important;
       background-color: transparent;
     }}
     /* 新增：文章搜索后标题或内容红框高亮（点击后消失） */
     .article-search-highlight {{
-       border: 4px solid red !important;
+       border: 4px solid #ff8888!important;
        background-color: transparent !important;
     }}
     /* 分页样式 */
@@ -562,7 +562,7 @@ def generate_html(articles, result_file="index.html"):
     body.dark-mode .highlighted-comment,
     body.dark-mode .search-highlight,
     body.dark-mode .article-search-highlight {{
-      border: 4px solid red !important;
+      border: 4px solid #ff8888!important;
     }}
 
     /* ---------------- Dark mode：按钮颜色稍暗（基于原始颜色暗调10%） ---------------- */
@@ -664,7 +664,7 @@ def generate_html(articles, result_file="index.html"):
     }}
     #articleComments.layout-list .comment.highlighted-comment,
     #articleComments.layout-list .comment.search-highlight {{
-        border: 4px solid #ff8888 !important;
+        border: 4px solid #ff8888!important !important;
     }}
     /* 加载动画 */
     .loading-indicator {{
@@ -724,9 +724,10 @@ def generate_html(articles, result_file="index.html"):
 <body>
   <header>
     <div style="display:flex; align-items:center;">
-      <h1>阳气诊所</h1>
-      <button class="btn btn-header" onclick="toggleDarkMode()">切换暗黑模式</button>
-      <button class="btn btn-header" onclick="openSettings()">设置</button>
+      <!-- 使用彩色 emoji 表情替换图标 -->
+      <h1>🏥阳气诊所</h1>
+      <button class="btn btn-header" onclick="toggleDarkMode()">🌙切换暗黑模式</button>
+      <button class="btn btn-header" onclick="openSettings()">⚙️设置</button>
       <!-- 语言切换下拉框 -->
       <select id="languageSelect" onchange="changeLanguage()" class="btn btn-header">
         <option value="original">原内容</option>
@@ -737,19 +738,23 @@ def generate_html(articles, result_file="index.html"):
   </header>
   <div class="search-controls">
     <select id="searchType">
-      <option value="comment">根据评论搜索</option>
-      <option value="author">根据作者搜索</option>
-      <option value="article">根据文章内容搜索</option>
-      <option value="siteBing">全站搜索 (必应, 不翻墙)</option>
-      <option value="siteGoogle">全站搜索 (谷歌, 翻墙)</option>
+      <option value="comment">💬 根据评论搜索</option>
+      <option value="author">👤 根据作者搜索</option>
+      <option value="article">📄 根据文章内容搜索</option>
+      <option value="siteBing">🌐 全站搜索 (必应, 不翻墙)</option>
+      <option value="siteGoogle">🌐 全站搜索 (谷歌, 翻墙)</option>
     </select>
     <input type="text" id="searchKeyword" placeholder="请输入搜索内容..." oninput="toggleSearchButton()">
-    <button id="searchButton" class="btn" onclick="searchComments()" disabled>搜索</button>
-    <button class="btn btn-danger search-close-btn" id="searchCloseButton" onclick="closeSearchResults()">关闭搜索结果</button>
+    <button id="searchButton" class="btn" onclick="searchComments()" disabled>
+      🔍 搜索
+    </button>
+    <button class="btn btn-danger search-close-btn" id="searchCloseButton" onclick="closeSearchResults()">
+      ❌ 关闭搜索结果
+    </button>
   </div>
   <!-- 新增：搜索结果额外控制区域，下拉框形式 -->
   <div id="searchExtraControls"></div>
-  <div id="loadingIndicator" class="loading-indicator">Loading...</div>
+  <div id="loadingIndicator" class="loading-indicator">加载中... ⏳</div>
   <div id="searchCount"></div>
   <div id="pagination" class="pagination"></div>
   <ul id="searchResults" class="search-results"></ul>
@@ -761,23 +766,27 @@ def generate_html(articles, result_file="index.html"):
   <div id="articlePagination" class="pagination"></div>
   <div id="articleComments" class="layout-card"></div>
   <div id="articleNav" style="text-align: center; margin: 20px 0;">
-    <button id="prevArticleBtn" class="nav-btn" onclick="prevArticle()">上一篇</button>
-    <button id="nextArticleBtn" class="nav-btn" onclick="nextArticle()">下一篇</button>
+    <button id="prevArticleBtn" class="nav-btn" onclick="prevArticle()">
+      ⬅️ 上一篇
+    </button>
+    <button id="nextArticleBtn" class="nav-btn" onclick="nextArticle()">
+      下一篇 ➡️
+    </button>
   </div>
   <button class="back-to-top" onclick="scrollToTop()">↑</button>
   <!-- 设置面板（Modal） -->
   <div id="settingsModal" class="modal">
     <div class="modal-content">
-      <h2>页面设置</h2>
+      <h2>🛠️ 页面设置</h2>
       <!-- 文本颜色设置 -->
       <div style="border-bottom: 1px solid #ccc; margin-bottom: 10px; padding-bottom: 10px;">
-        <h3>文本颜色设置</h3>
+        <h3>🎨 文本颜色设置</h3>
         <label for="textColorInput">文本颜色:</label>
         <input type="color" id="textColorInput" value="#333333">
       </div>
       <!-- 字体设置 -->
       <div style="border-bottom: 1px solid #ccc; margin-bottom: 10px; padding-bottom: 10px;">
-        <h3>字体设置</h3>
+        <h3>🔠 字体设置</h3>
         <label for="fontSizeInput">字体大小 (px): <span id="fontSizeVal">16</span></label>
         <input type="range" id="fontSizeInput" min="12" max="36" value="16" oninput="document.getElementById('fontSizeVal').innerText=this.value">
         <label for="lineHeightInput">行距 (倍数):</label>
@@ -800,7 +809,7 @@ def generate_html(articles, result_file="index.html"):
       </div>
       <!-- 新增：主题选择（新增“无主题”选项） -->
       <div style="border-bottom: 1px solid #ccc; margin-bottom: 10px; padding-bottom: 10px;">
-        <h3>主题选择</h3>
+        <h3>🌈 主题选择</h3>
         <label for="themeSelect">选择主题:</label>
         <select id="themeSelect">
           <option value="none" selected>无主题</option>
@@ -814,11 +823,19 @@ def generate_html(articles, result_file="index.html"):
             <option value="modern2">现代简约</option>
             <option value="modern3">经典时光</option>
           </optgroup>
+	<optgroup label="新主题">
+    	<option value="romantic">浪漫粉彩</option>
+    	<option value="techBlue">科技蓝调</option>
+   	 <option value="dreamPurple">梦幻紫</option>
+    	<option value="minimalBlackWhite">极简黑白</option>
+    	<option value="vintage">复古风情</option>
+    	<option value="japaneseFresh">日系清新</option>
+        </optgroup>
         </select>
       </div>
       <!-- 布局风格设置 -->
       <div style="border-bottom: 1px solid #ccc; margin-bottom: 10px; padding-bottom: 10px;">
-        <h3>布局风格设置</h3>
+        <h3>🗂️ 布局风格设置</h3>
         <label for="layoutStyleSelect">选择布局风格:</label>
         <select id="layoutStyleSelect">
           <option value="card" selected>卡片布局</option>
@@ -1031,7 +1048,7 @@ def generate_html(articles, result_file="index.html"):
       }} else {{
           document.getElementById('searchCloseButton').style.display = 'none';
           document.getElementById('searchExtraControls').style.display = 'none';
-          alert("没有找到匹配的" + (searchType === 'article' ? "文章" : "评论") + "！");
+          alert("😢 没有找到匹配的" + (searchType === 'article' ? "文章" : "评论") + "！");
       }}
     }}
     // 新增：时间排序下拉框响应函数
@@ -1161,7 +1178,7 @@ def generate_html(articles, result_file="index.html"):
       pageInput.value = currentPage;
       topLine.appendChild(pageInput);
       const jumpBtn = document.createElement('button');
-      jumpBtn.innerText = "跳转";
+      jumpBtn.innerHTML = '📍 跳转';
       jumpBtn.className = 'jump-btn';
       jumpBtn.onclick = function() {{
         let target = parseInt(document.getElementById('pageInput').value);
@@ -1177,7 +1194,7 @@ def generate_html(articles, result_file="index.html"):
       bottomLine.style.marginTop = '10px';
       if(currentPage > 1) {{
         const prevBtn = document.createElement('button');
-        prevBtn.innerText = "上一页";
+        prevBtn.innerHTML = '⬅️ 上一页';
         prevBtn.className = 'nav-btn';
         prevBtn.onclick = function() {{
           currentPage--;
@@ -1187,7 +1204,7 @@ def generate_html(articles, result_file="index.html"):
       }}
       if(currentPage < totalPages) {{
         const nextBtn = document.createElement('button');
-        nextBtn.innerText = "下一页";
+        nextBtn.innerHTML = '下一页 ➡️';
         nextBtn.className = 'nav-btn';
         nextBtn.onclick = function() {{
           currentPage++;
@@ -1306,7 +1323,7 @@ def generate_html(articles, result_file="index.html"):
       pageInput.value = currentArticlePage;
       topLine.appendChild(pageInput);
       const jumpBtn = document.createElement('button');
-      jumpBtn.innerText = "跳转";
+      jumpBtn.innerHTML = '📍 跳转';
       jumpBtn.className = 'jump-btn';
       jumpBtn.onclick = function() {{
         let target = parseInt(document.getElementById('articlePageInput').value);
@@ -1325,7 +1342,7 @@ def generate_html(articles, result_file="index.html"):
       bottomLine.style.marginTop = '10px';
       if(currentArticlePage > 1) {{
         const prevBtn = document.createElement('button');
-        prevBtn.innerText = "上一页";
+        prevBtn.innerHTML = '⬅️ 上一页';
         prevBtn.className = 'nav-btn';
         prevBtn.onclick = function() {{
           currentArticlePage--;
@@ -1338,7 +1355,7 @@ def generate_html(articles, result_file="index.html"):
       }}
       if(currentArticlePage < totalPages) {{
         const nextBtn = document.createElement('button');
-        nextBtn.innerText = "下一页";
+        nextBtn.innerHTML = '下一页 ➡️';
         nextBtn.className = 'nav-btn';
         nextBtn.onclick = function() {{
           currentArticlePage++;
@@ -1379,7 +1396,7 @@ def generate_html(articles, result_file="index.html"):
       if(currentIndex > 0) {{
            goToArticle(currentIndex - 1, true);
       }} else {{
-           alert("已经是第一篇文章了");
+           alert("🙈 已经是第一篇文章了");
       }}
     }}
     function nextArticle() {{
@@ -1387,7 +1404,7 @@ def generate_html(articles, result_file="index.html"):
       if(currentIndex < articlesData.length - 1) {{
            goToArticle(currentIndex + 1, true);
       }} else {{
-           alert("已经是最后一篇文章了");
+           alert("🙉 已经是最后一篇文章了");
       }}
     }}
     /* --------------- 设置面板功能 --------------- */
@@ -1442,50 +1459,92 @@ def generate_html(articles, result_file="index.html"):
       updateLayoutStyle(layoutStyle);
 
       const theme = document.getElementById('themeSelect').value;
-      const themeSettings = {{
-          "chinese1": {{
-              "--primary-color": "#2c3e50",
-              "--secondary-color": "#7f8c8d",
-              "--background-color": "#f8f1e5",
-              "--btn-bg": "#2c3e50",
-              "--btn-hover": "#7f8c8d"
-          }},
-          "chinese2": {{
-              "--primary-color": "#8d6e63",
-              "--secondary-color": "#d7ccc8",
-              "--background-color": "#fff8e1",
-              "--btn-bg": "#8d6e63",
-              "--btn-hover": "#d7ccc8"
-          }},
-          "chinese3": {{
-              "--primary-color": "#00897b",
-              "--secondary-color": "#80cbc4",
-              "--background-color": "#e0f2f1",
-              "--btn-bg": "#00897b",
-              "--btn-hover": "#80cbc4"
-          }},
-          "modern1": {{
-              "--primary-color": "#4caf50",
-              "--secondary-color": "#81c784",
-              "--background-color": "#e8f5e9",
-              "--btn-bg": "#4caf50",
-              "--btn-hover": "#81c784"
-          }},
-          "modern2": {{
-              "--primary-color": "#2196f3",
-              "--secondary-color": "#90caf9",
-              "--background-color": "#e3f2fd",
-              "--btn-bg": "#2196f3",
-              "--btn-hover": "#90caf9"
-          }},
-          "modern3": {{
-              "--primary-color": "#3e2723",
-              "--secondary-color": "#5d4037",
-              "--background-color": "#f3e0dc",
-              "--btn-bg": "#3e2723",
-              "--btn-hover": "#5d4037"
-          }}
-      }};
+const themeSettings = {{
+    "chinese1": {{
+        "--primary-color": "#2c3e50",
+        "--secondary-color": "#7f8c8d",
+        "--background-color": "#f8f1e5",
+        "--btn-bg": "#2c3e50",
+        "--btn-hover": "#7f8c8d"
+    }},
+    "chinese2": {{
+        "--primary-color": "#8d6e63",
+        "--secondary-color": "#d7ccc8",
+        "--background-color": "#fff8e1",
+        "--btn-bg": "#8d6e63",
+        "--btn-hover": "#d7ccc8"
+    }},
+    "chinese3": {{
+        "--primary-color": "#00897b",
+        "--secondary-color": "#80cbc4",
+        "--background-color": "#e0f2f1",
+        "--btn-bg": "#00897b",
+        "--btn-hover": "#80cbc4"
+    }},
+    "modern1": {{
+        "--primary-color": "#4caf50",
+        "--secondary-color": "#81c784",
+        "--background-color": "#e8f5e9",
+        "--btn-bg": "#4caf50",
+        "--btn-hover": "#81c784"
+    }},
+    "modern2": {{
+        "--primary-color": "#2196f3",
+        "--secondary-color": "#90caf9",
+        "--background-color": "#e3f2fd",
+        "--btn-bg": "#2196f3",
+        "--btn-hover": "#90caf9"
+    }},
+    "modern3": {{
+        "--primary-color": "#3e2723",
+        "--secondary-color": "#5d4037",
+        "--background-color": "#f3e0dc",
+        "--btn-bg": "#3e2723",
+        "--btn-hover": "#5d4037"
+    }},
+    "romantic": {{         // 浪漫粉彩风格
+        "--primary-color": "#FF8DA9",
+        "--secondary-color": "#FFB3C1",
+        "--background-color": "#FFF0F5",
+        "--btn-bg": "#FF8DA9",
+        "--btn-hover": "#FF6F91"
+    }},
+    "techBlue": {{         // 科技蓝调风格
+        "--primary-color": "#0077CC",
+        "--secondary-color": "#005FA3",
+        "--background-color": "#E6F7FF",
+        "--btn-bg": "#0077CC",
+        "--btn-hover": "#006BB3"
+    }},
+    "dreamPurple": {{      // 梦幻紫风格
+        "--primary-color": "#9C27B0",
+        "--secondary-color": "#7B1FA2",
+        "--background-color": "#F3E5F5",
+        "--btn-bg": "#9C27B0",
+        "--btn-hover": "#8E24AA"
+    }},
+    "minimalBlackWhite": {{ // 极简黑白风格
+        "--primary-color": "#000000",
+        "--secondary-color": "#333333",
+        "--background-color": "#FFFFFF",
+        "--btn-bg": "#000000",
+        "--btn-hover": "#666666"
+    }},
+    "vintage": {{          // 复古风情
+        "--primary-color": "#8B4513",
+        "--secondary-color": "#A0522D",
+        "--background-color": "#F5F5DC",
+        "--btn-bg": "#8B4513",
+        "--btn-hover": "#7B3E0A"
+    }},
+    "japaneseFresh": {{    // 日系清新风格
+        "--primary-color": "#8FBC8F",
+        "--secondary-color": "#708090",
+        "--background-color": "#FAFAD2",
+        "--btn-bg": "#8FBC8F",
+        "--btn-hover": "#7AA07A"
+    }}
+}};
       if(theme !== "none" && themeSettings[theme]) {{
           const t = themeSettings[theme];
           for (const key in t) {{
