@@ -278,6 +278,17 @@ def generate_html(articles, result_file="index.html"):
       margin: 10px 0;
       display: none;
     }}
+    /* 搜索结果计数样式优化 */
+    #searchCount {{
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      color: var(--primary-color);
+      margin: 20px 0;
+    }}
+    #searchCount span {{
+      color: var(--btn-bg);
+    }}
     /* 文章内容 */
     .article-header {{
       text-align: center;
@@ -725,7 +736,7 @@ def generate_html(articles, result_file="index.html"):
   <header>
     <div style="display:flex; align-items:center;">
       <!-- 使用彩色 emoji 表情替换图标 -->
-      <h1>🏥阳气诊所</h1>
+      <h1>阳气诊所</h1>
       <button class="btn btn-header" onclick="toggleDarkMode()">🌙切换暗黑模式</button>
       <button class="btn btn-header" onclick="openSettings()">⚙️设置</button>
       <!-- 语言切换下拉框 -->
@@ -818,19 +829,19 @@ def generate_html(articles, result_file="index.html"):
             <option value="chinese2">书香古韵</option>
             <option value="chinese3">云水谣</option>
           </optgroup>
-          <optgroup label="其他风格">
+          <optgroup label="都市风尚">
             <option value="modern1">清风雅韵</option>
             <option value="modern2">现代简约</option>
             <option value="modern3">经典时光</option>
           </optgroup>
-	<optgroup label="新主题">
-    	<option value="romantic">浪漫粉彩</option>
-    	<option value="techBlue">科技蓝调</option>
-   	 <option value="dreamPurple">梦幻紫</option>
-    	<option value="minimalBlackWhite">极简黑白</option>
-    	<option value="vintage">复古风情</option>
-    	<option value="japaneseFresh">日系清新</option>
-        </optgroup>
+          <optgroup label="新主题">
+            <option value="romantic">浪漫粉彩</option>
+            <option value="techBlue">科技蓝调</option>
+            <option value="dreamPurple">梦幻紫</option>
+            <option value="minimalBlackWhite">极简黑白</option>
+            <option value="vintage">复古风情</option>
+            <option value="japaneseFresh">日系清新</option>
+          </optgroup>
         </select>
       </div>
       <!-- 布局风格设置 -->
@@ -1088,7 +1099,7 @@ def generate_html(articles, result_file="index.html"):
       if(currentPage > totalPages) {{
          currentPage = totalPages > 0 ? totalPages : 1;
       }}
-      document.getElementById('searchCount').innerText = "共找到 " + totalResults + " 条记录";
+      document.getElementById('searchCount').innerHTML = "共找到 <span>" + totalResults + "</span> 条记录";
       displayPagination(totalPages);
       const start = (currentPage - 1) * resultsPerPage;
       const end = start + resultsPerPage;
